@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="fr" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7F9FD">
+<meta name="color-scheme" content="light">
+<title>Exercice 5 — Distance parcourue sur un cercle</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script>document.documentElement.classList.replace('no-js','js');</script>
+
+<style>
+/* =============================================================
+   1. JETONS — charte Stud'Éval
+   ============================================================= */
+:root {
+  --se-blue: #2F63F5; --se-blue-700: #244FCC; --se-blue-300: #93B4FD; --se-blue-200: #C6D4FD;
+  --se-blue-100: #E6EDFF; --se-blue-50: #F3F6FE;
+  --se-ink: #0B1526; --se-ink-2: #4A5878; --se-ink-3: #8A96B3;
+  --se-line: #DDE4F2; --se-line-2: #E9EEF8; --se-bg: #F7F9FD; --se-card: #FFFFFF;
+  --se-ok: #1B9E5A; --se-ok-700: #157A46; --se-ok-100: #DFF5E8;
+  --se-err: #D9534F; --se-err-100: #FDECEC;
+  --r-card: 18px; --r-btn: 12px;
+  --font: 'Sora', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --math: 'Times New Roman', Times, serif;
+  --ease: cubic-bezier(.22,.8,.22,1);
+  --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+}
+
+/* =============================================================
+   2. BASE ET COQUILLE
+   ============================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; min-height: 100dvh; font-family: var(--font); color: var(--se-ink); background: var(--se-bg); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: linear-gradient(to right, rgba(47,99,245,.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(47,99,245,.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,.25) 100%); mask-image: linear-gradient(180deg, #000 0%, rgba(0,0,0,.25) 100%);
+}
+.app { position: relative; z-index: 1; min-height: 100dvh; display: flex; flex-direction: column; max-width: 1040px; margin: 0 auto;
+  padding: calc(16px + var(--sat)) calc(16px + var(--sar)) calc(20px + var(--sab)) calc(16px + var(--sal)); }
+@media (min-width: 760px) { .app { padding: calc(26px + var(--sat)) calc(32px + var(--sar)) calc(24px + var(--sab)) calc(32px + var(--sal)); } }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
+.brand { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--se-blue); font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+.brand svg { width: 22px; height: 18px; display: block; }
+.badge { display: inline-flex; align-items: center; padding: 6px 11px; border-radius: 999px; background: var(--se-blue-100); color: var(--se-blue-700); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.retour { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin-top: 18px; min-height: 40px; padding: 0 4px; color: var(--se-ink-2); font-size: 14px; font-weight: 500; text-decoration: none; border-radius: 8px; transition: color .25s; }
+.retour svg { width: 16px; height: 16px; transition: transform .3s var(--ease); }
+.retour:hover { color: var(--se-blue); } .retour:hover svg { transform: translateX(-3px); }
+.retour:focus-visible { outline: 3px solid var(--se-blue); outline-offset: 2px; }
+.contexte { margin: 10px 0 0; font-size: 13px; font-weight: 500; color: var(--se-ink-3); }
+
+.cadre { margin-top: 12px; background: var(--se-card); border: 1px solid var(--se-line); border-radius: var(--r-card); box-shadow: 0 1px 2px rgba(11,21,38,.04), 0 8px 22px -14px rgba(11,21,38,.12); padding: 20px 18px 22px; }
+@media (min-width: 560px) { .cadre { padding: 26px 28px 28px; } }
+.ecran { display: none; } .ecran.actif { display: block; animation: rise .45s var(--ease); }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+h1, h2 { margin: 0; letter-spacing: -.02em; line-height: 1.15; }
+h1 { font-size: clamp(22px, 5.4vw, 30px); font-weight: 700; } h2 { font-size: clamp(22px, 5.4vw, 28px); font-weight: 700; }
+.texte { margin: 0; font-size: 15.5px; line-height: 1.55; color: var(--se-ink-2); } .texte b { color: var(--se-ink); font-weight: 600; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 12px 20px; border: 0; border-radius: var(--r-btn); background: var(--se-blue); color: #fff; font: inherit; font-weight: 600; font-size: 15.5px; cursor: pointer; text-decoration: none; transition: background .25s, transform .3s var(--ease); -webkit-tap-highlight-color: transparent; }
+.btn svg { width: 17px; height: 17px; } .btn:hover { background: var(--se-blue-700); } .btn:active { transform: scale(.985); }
+.btn:focus-visible { outline: 3px solid var(--se-blue); outline-offset: 3px; }
+.btn--secondaire { background: var(--se-card); color: var(--se-blue); border: 1px solid var(--se-blue-200); } .btn--secondaire:hover { background: var(--se-blue-50); }
+.btn--petit { min-height: 38px; padding: 8px 14px; font-size: 13.5px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; } @media (max-width: 480px) { .actions .btn { flex: 1 1 100%; } }
+.intro h1 { margin-bottom: 12px; } .intro .texte + .texte { margin-top: 10px; }
+.rappel { display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: var(--se-blue-50); border: 1px solid var(--se-blue-200); }
+.rappel p { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--se-ink-2); } .rappel b { color: var(--se-ink); font-weight: 600; }
+
+.progression { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.progression__ligne { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--se-ink-2); } .progression__ligne span:last-child { color: var(--se-ink-3); font-weight: 500; }
+.barre { height: 6px; border-radius: 999px; background: var(--se-blue-100); overflow: hidden; } .barre > span { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--se-blue); transition: width .5s var(--ease); }
+
+.message { display: flex; gap: 12px; align-items: flex-start; padding: 13px 15px; border-radius: 12px; border: 1px solid transparent; animation: rise .35s var(--ease); }
+.message__icone { flex: 0 0 26px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; }
+.message__icone svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.message p { margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--se-ink-2); } .message p b { display: block; margin-bottom: 2px; font-size: 15px; }
+.message--juste { background: var(--se-ok-100); border-color: #BFE8D0; } .message--juste .message__icone { background: var(--se-ok); color: #fff; } .message--juste p b { color: var(--se-ok-700); }
+.message--aide { background: var(--se-blue-50); border-color: var(--se-blue-200); } .message--aide .message__icone { background: var(--se-blue-100); color: var(--se-blue-700); } .message--aide p b { color: var(--se-blue-700); }
+.message .frac { font-family: var(--math); font-size: 18px; vertical-align: middle; margin: 0 2px; }
+.message .frac > .num { padding: 0 4px 1px; border-bottom-width: 1.5px; } .message .frac > .den { padding: 1px 4px 0; }
+
+/* =============================================================
+   3. DISPOSITION : figure à gauche, raisonnement à droite
+   ============================================================= */
+.question-grille { display: grid; grid-template-columns: 1fr; gap: 18px; }
+@media (min-width: 860px) { .question-grille { grid-template-columns: 380px 1fr; gap: 28px; align-items: start; } .colonne-figure { position: sticky; top: 16px; } }
+.consigne { margin: 0 0 4px; font-size: clamp(17px, 4.4vw, 20px); font-weight: 600; line-height: 1.3; }
+.donnees { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 8px 0 10px; font-size: 14.5px; color: var(--se-ink-2); }
+.donnees b { color: var(--se-ink); font-weight: 600; }
+.donnees i, .memo i, .ligne-math i { font-family: var(--math); font-style: italic; }
+
+.figure { position: relative; border-radius: 14px; background: var(--se-blue-50); border: 1px solid var(--se-line-2); padding: 6px; }
+.figure svg { display: block; width: 100%; height: auto; }
+.figure__actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; }
+.figure__note { margin: 0; font-size: 12.5px; color: var(--se-ink-3); }
+.rejouer { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--se-blue-200); background: var(--se-card); color: var(--se-blue-700); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .2s; }
+.rejouer:hover { background: var(--se-blue-100); } .rejouer svg { width: 14px; height: 14px; }
+.rejouer:focus-visible { outline: 3px solid var(--se-blue); outline-offset: 2px; }
+
+/* Mémo permanent : formule du périmètre et tour complet */
+.memo { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.memo__carte { padding: 10px 12px; border-radius: 12px; background: var(--se-card); border: 1px solid var(--se-line); }
+.memo__cle { display: block; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--se-ink-3); }
+.memo__val { display: block; margin-top: 4px; font-family: var(--math); font-size: 20px; color: var(--se-ink); }
+.memo__sous { display: block; margin-top: 2px; font-size: 12px; color: var(--se-ink-3); }
+.memo__carte.eclair { animation: eclair 1.6s ease; }
+@keyframes eclair { 0%, 100% { box-shadow: none; } 30% { box-shadow: 0 0 0 4px var(--se-blue-100); border-color: var(--se-blue); } }
+
+/* Cercle */
+.c-cercle { fill: none; stroke: var(--se-ink-2); stroke-width: 2; }
+.c-rayon { stroke: var(--se-ink-2); stroke-width: 1.6; }
+.c-arc { fill: none; stroke: var(--se-blue); stroke-width: 6; stroke-linecap: round; }
+.c-angle { fill: rgba(47,99,245,.10); stroke: var(--se-blue); stroke-width: 1.6; }
+.c-secteur { stroke: var(--se-blue-300); stroke-width: 1; stroke-dasharray: 4 5; opacity: 0; transition: opacity .6s; }
+.c-secteur.visible { opacity: 1; }
+.c-point { fill: var(--se-blue); stroke: #fff; stroke-width: 2.5; }
+.c-point--fixe { fill: var(--se-ink-2); }
+.c-lbl { font-family: var(--math); font-style: italic; font-size: 20px; fill: var(--se-ink-2); text-anchor: middle; dominant-baseline: central; }
+.c-lbl--m { fill: var(--se-blue); font-weight: 700; }
+.c-mesure { font-family: var(--font); font-weight: 600; font-size: 17px; fill: var(--se-blue); text-anchor: middle; dominant-baseline: central; }
+.c-rayon-lbl { font-family: var(--font); font-size: 14px; font-weight: 600; fill: var(--se-ink-2); text-anchor: middle; dominant-baseline: central; }
+.c-rayon-lbl i { font-family: var(--math); font-style: italic; }
+.c-frac { font-family: var(--math); font-size: 16px; fill: var(--se-ok-700); text-anchor: middle; dominant-baseline: central; opacity: 0; transition: opacity .6s; }
+.c-frac.visible { opacity: 1; }
+
+/* =============================================================
+   4. ÉTAPES DE RAISONNEMENT
+   ============================================================= */
+.etapes { display: flex; flex-direction: column; gap: 14px; }
+.etape { animation: rise .5s var(--ease); }
+.etape + .etape { padding-top: 14px; border-top: 1px solid var(--se-line-2); }
+.etape__titre { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font-size: 15.5px; font-weight: 600; }
+.etape__num { flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--se-blue-100); color: var(--se-blue-700); font-size: 12px; font-weight: 700; }
+.etape.faite .etape__num { background: var(--se-ok-100); color: var(--se-ok-700); }
+.etape.faite .etape__titre { color: var(--se-ink-2); }
+.etape__question { margin: 0 0 8px; font-size: 14.5px; color: var(--se-ink-2); line-height: 1.5; }
+.retour-eleve { margin-top: 10px; }
+.indice { margin: 4px 0 0; font-size: 13px; color: var(--se-ink-3); }
+
+/* Écriture mathématique */
+.ligne-math { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; padding: 12px 4px; font-family: var(--math); font-size: 28px; color: var(--se-ink); }
+@media (min-width: 560px) { .ligne-math { font-size: 32px; gap: 10px 14px; } }
+.ligne-math .mot { font-family: var(--font); font-size: 13px; font-weight: 600; color: var(--se-ink-2); }
+.ligne-math .unite { font-family: var(--font); font-size: 16px; color: var(--se-ink-2); }
+.frac { display: inline-flex; flex-direction: column; align-items: center; }
+.frac > .num { border-bottom: 2.5px solid currentColor; padding: 0 8px 5px; min-width: 40px; text-align: center; }
+.frac > .den { padding: 5px 8px 0; min-width: 40px; text-align: center; }
+.op { font-family: var(--math); color: var(--se-ink-2); font-size: .85em; }
+.ligne-math.compacte { font-size: 24px; padding: 6px 0; gap: 6px 8px; }
+.ligne-math.compacte .champ { width: 56px; min-height: 42px; font-size: 22px; padding: 3px 4px; }
+.ligne-math.compacte .frac > .num, .ligne-math.compacte .frac > .den { min-width: 0; padding-left: 4px; padding-right: 4px; }
+.champ { width: 72px; min-height: 48px; padding: 4px 6px; text-align: center; border-radius: 10px; border: 2px solid var(--se-blue-300); background: var(--se-card); font-family: var(--math); font-size: 26px; color: var(--se-ink); -webkit-appearance: none; appearance: none; }
+.champ--large { width: 110px; }
+.champ:focus { outline: none; border-color: var(--se-blue); box-shadow: 0 0 0 4px var(--se-blue-100); }
+.champ.fausse { border-color: var(--se-err); background: var(--se-err-100); }
+.champ.bonne { border-color: var(--se-ok); background: var(--se-ok-100); }
+.champ[readonly] { border-style: solid; }
+.champ[readonly]:not(.bonne) { border-color: var(--se-line); background: var(--se-bg); color: var(--se-ink-2); }
+.frac > .num > .champ { margin-bottom: 3px; } .frac > .den > .champ { margin-top: 3px; }
+.redaction { display: flex; flex-direction: column; gap: 6px; }
+.redaction__ligne { display: flex; align-items: center; gap: 10px; }
+.redaction__etiquette { flex: 0 0 auto; width: 22px; font-size: 12px; font-weight: 700; color: var(--se-ink-3); }
+.redaction__ligne .ligne-math { flex: 1; justify-content: flex-start; padding: 6px 0; }
+.redaction__ligne.verrouillee .ligne-math { color: var(--se-ink-2); }
+
+/* Choix (boutons) */
+.choix { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.choix--2 { grid-template-columns: 1fr 1fr; }
+@media (min-width: 560px) { .choix--3 { grid-template-columns: repeat(3, 1fr); } }
+.choix__btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 56px; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--se-line); background: var(--se-card); font: inherit; font-size: 15px; font-weight: 600; color: var(--se-ink); cursor: pointer; text-align: center; transition: border-color .25s, background .25s; -webkit-tap-highlight-color: transparent; }
+.choix__btn small { font-family: var(--math); font-size: 18px; font-weight: 400; color: var(--se-ink-2); }
+.choix__btn:hover { border-color: var(--se-blue-200); background: var(--se-blue-50); }
+.choix__btn:focus-visible { outline: 3px solid var(--se-blue); outline-offset: 2px; }
+.choix__btn.faux { border-color: var(--se-err); background: var(--se-err-100); }
+.choix__btn.juste { border-color: var(--se-ok); background: var(--se-ok-100); }
+.choix__btn[disabled] { cursor: default; opacity: .55; } .choix__btn.juste[disabled] { opacity: 1; }
+
+/* Jetons pour composer d = [ ] × [ ] */
+.case { display: inline-flex; align-items: center; justify-content: center; min-width: 64px; min-height: 48px; padding: 4px 12px; border-radius: 10px; border: 2px dashed var(--se-blue-300); background: var(--se-card); font: inherit; font-family: var(--math); font-size: 26px; color: var(--se-ink); cursor: pointer; transition: border-color .25s, background .25s, box-shadow .25s; -webkit-tap-highlight-color: transparent; }
+.case.vide { color: var(--se-ink-3); font-family: var(--font); font-size: 13px; font-weight: 600; }
+.case.pleine { border-style: solid; border-color: var(--se-blue-200); }
+.case.active { border-color: var(--se-blue); box-shadow: 0 0 0 4px var(--se-blue-100); }
+.case.fausse { border-color: var(--se-err); background: var(--se-err-100); }
+.case.bonne { border-style: solid; border-color: var(--se-ok); background: var(--se-ok-100); cursor: default; }
+.case .frac { font-size: .85em; } .case .frac > .num { padding: 0 5px 2px; border-bottom-width: 2px; } .case .frac > .den { padding: 2px 5px 0; }
+.jetons { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; padding: 12px; border-radius: 12px; background: var(--se-blue-50); border: 1px solid var(--se-blue-200); animation: rise .3s var(--ease); }
+.jetons p { flex: 1 1 100%; margin: 0 0 2px; text-align: center; font-size: 13px; color: var(--se-ink-2); }
+.jeton { min-height: 46px; padding: 6px 16px; border-radius: 999px; border: 1.5px solid var(--se-blue-200); background: var(--se-card); font-family: var(--math); font-size: 20px; color: var(--se-ink); cursor: pointer; transition: background .2s, border-color .2s; -webkit-tap-highlight-color: transparent; display: inline-flex; align-items: center; gap: 6px; }
+.jeton small { font-family: var(--font); font-size: 11px; color: var(--se-ink-3); }
+.jeton:hover { background: var(--se-blue-100); border-color: var(--se-blue-300); }
+.jeton:focus-visible { outline: 3px solid var(--se-blue); outline-offset: 2px; }
+.jeton .frac { font-size: 16px; } .jeton .frac > .num { padding: 0 4px 1px; border-bottom-width: 1.5px; } .jeton .frac > .den { padding: 1px 4px 0; }
+
+.calcul { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.calcul label { flex: 1 1 100%; font-size: 14.5px; color: var(--se-ink-2); }
+.calcul .unite { font-size: 16px; color: var(--se-ink-2); }
+.suite { margin-top: 16px; display: none; } .suite.visible { display: flex; }
+
+/* Carte « La méthode » et écran final */
+.methode { padding: 18px; border-radius: 14px; background: var(--se-blue-50); border: 1px solid var(--se-blue-200); }
+.methode h3 { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--se-blue-700); }
+.methode ol { margin: 0; padding-left: 22px; font-size: 15px; line-height: 1.6; color: var(--se-ink-2); }
+.methode ol b { color: var(--se-ink); font-weight: 600; }
+.methode .ligne-math { font-size: 26px; padding: 10px 0 2px; }
+.methode__conclusion { margin: 10px 0 0; font-size: 13.5px; color: var(--se-ink-3); text-align: center; }
+.chaine { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 14px 0; }
+.chaine span { font-size: 15px; font-weight: 600; color: var(--se-ink); padding: 8px 16px; border-radius: 999px; background: var(--se-blue-50); border: 1px solid var(--se-blue-200); }
+.chaine svg { width: 18px; height: 18px; color: var(--se-blue-300); }
+.chaine span.final { background: var(--se-ok-100); border-color: #BFE8D0; color: var(--se-ok-700); }
+.fin h2 { margin-bottom: 14px; }
+.bilan { display: grid; grid-template-columns: 1fr; gap: 10px; } @media (min-width: 480px) { .bilan { grid-template-columns: 1fr 1fr; } }
+.bilan__carte { padding: 16px 18px; border-radius: 12px; border: 1px solid var(--se-line); background: var(--se-bg); }
+.bilan__carte--ok { background: var(--se-ok-100); border-color: #BFE8D0; }
+.bilan__nombre { display: block; font-size: 32px; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
+.bilan__carte--ok .bilan__nombre { color: var(--se-ok-700); } .bilan__carte--aide .bilan__nombre { color: var(--se-blue-700); }
+.bilan__libelle { display: block; margin-top: 6px; font-size: 13.5px; color: var(--se-ink-2); line-height: 1.4; }
+
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; padding: 22px 2px 0; font-size: 12.5px; color: var(--se-ink-3); }
+.js .reveal { opacity: 0; transform: translateY(10px); } .js.is-ready .reveal { animation: rise .8s var(--ease) var(--d, 0ms) forwards; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .js .reveal { opacity: 1; transform: none; }
+}
+
+.frac--produit > .num, .frac--produit > .den { display: inline-flex; align-items: center; gap: 4px; }
+.frac--produit .op { transition: opacity .8s var(--ease); }
+.frac--produit.regroupe .champ { transition: opacity .9s var(--ease), transform .9s var(--ease); opacity: .35; transform: scale(.92); }
+.frac--produit.regroupe .op { opacity: .25; }
+
+/* =============================================================
+   5. CAHIER (rédaction validée) · étape en cours · aide facultative
+   ============================================================= */
+.cahier { padding: 12px 14px; border-radius: 12px; background: var(--se-bg); border: 1px solid var(--se-line); }
+.cahier__titre { margin: 0 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--se-ink-3); }
+.cahier__ligne { display: flex; align-items: center; gap: 10px; padding: 4px 0; animation: rise .4s var(--ease); }
+.cahier__coche { flex: 0 0 18px; width: 18px; height: 18px; border-radius: 50%; background: var(--se-ok-100); color: var(--se-ok-700); display: grid; place-items: center; }
+.cahier__coche svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.cahier__ligne .ligne-math { padding: 2px 0; font-size: 21px; gap: 4px 7px; justify-content: flex-start; color: var(--se-ink-2); }
+.cahier__ligne .ligne-math .frac > .num, .cahier__ligne .ligne-math .frac > .den { min-width: 0; padding: 0 5px 2px; }
+.cahier__ligne .ligne-math .frac > .num { border-bottom-width: 2px; } .cahier__ligne .ligne-math .frac > .den { padding-top: 2px; }
+.cahier__vide { margin: 0; font-size: 13px; color: var(--se-ink-3); }
+.cahier .ligne-math.finale { color: var(--se-ok-700); font-weight: 600; }
+
+.encours { margin-top: 14px; padding: 16px; border-radius: 14px; background: var(--se-card); border: 1.5px solid var(--se-blue-200); box-shadow: 0 0 0 4px var(--se-blue-50); animation: rise .45s var(--ease); }
+.encours__consigne { margin: 0 0 6px; font-size: clamp(16px, 4.2vw, 18px); font-weight: 600; line-height: 1.35; }
+.encours__texte { margin: 0 0 8px; font-size: 14.5px; line-height: 1.55; color: var(--se-ink-2); }
+.encours__texte b { color: var(--se-ink); font-weight: 600; }
+.encours .ligne-math { padding: 10px 0; }
+.encours .ligne-math.compacte { padding: 8px 0; }
+.roles { display: flex; justify-content: center; gap: 24px; margin: -4px 0 4px; }
+.roles span { font-size: 12px; color: var(--se-ink-3); }
+.frac.roles-frac { position: relative; }
+.frac .role { display: block; font-family: var(--font); font-size: 11.5px; color: var(--se-ink-3); margin-top: 3px; white-space: nowrap; }
+.frac > .num .role { margin: 0 0 4px; }
+.pied-etape { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+.aide-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--se-line); background: var(--se-card); color: var(--se-ink-2); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .2s, border-color .2s; }
+.aide-btn:hover { background: var(--se-blue-50); border-color: var(--se-blue-200); color: var(--se-blue-700); }
+.aide-btn svg { width: 15px; height: 15px; }
+.aide-btn:focus-visible { outline: 3px solid var(--se-blue); outline-offset: 2px; }
+.equiv { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px; padding: 12px; border-radius: 12px; background: var(--se-blue-50); border: 1px solid var(--se-blue-200); }
+.equiv .ligne-math { padding: 4px 0; font-size: 22px; }
+.equiv p { margin: 2px 0 0; text-align: center; font-size: 13px; color: var(--se-ink-2); }
+.info-perimetre { margin-top: 6px; padding: 12px 14px; border-radius: 12px; background: var(--se-blue-50); border: 1px solid var(--se-blue-200); }
+.info-perimetre .ligne-math { padding: 4px 0; font-size: 26px; }
+.info-perimetre p { margin: 4px 0 0; text-align: center; font-size: 14px; color: var(--se-ink-2); }
+</style>
+</head>
+
+<body>
+<div class="app">
+  <div class="top reveal" style="--d:0ms">
+    <a class="brand" href="index.html" aria-label="Stud'Éval — accueil">
+      <svg viewBox="0 0 22 18" aria-hidden="true"><rect x="0" y="10" width="5" height="8" rx="1.2" fill="#93B4FD"/><rect x="8.5" y="5" width="5" height="13" rx="1.2" fill="#6091FA"/><rect x="17" y="0" width="5" height="18" rx="1.2" fill="#2F63F5"/></svg>
+      Stud’Éval
+    </a>
+    <span class="badge">Première Bac Pro</span>
+  </div>
+  <a class="retour reveal" style="--d:40ms" href="trigonometrie.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+    Retour à la trigonométrie
+  </a>
+  <p class="contexte reveal" style="--d:80ms">Trigonométrie · Je m’entraîne · Exercice 5</p>
+
+  <main class="cadre reveal" style="--d:140ms">
+
+    <!-- ===================== INTRODUCTION ===================== -->
+    <section class="ecran intro actif" id="ecran-intro" aria-labelledby="titre-intro">
+      <h1 id="titre-intro">Longueur parcourue sur un cercle</h1>
+      <p class="texte">Un point <i style="font-family:var(--math)">M</i> part de <i style="font-family:var(--math)">H</i> et tourne sur un cercle de centre <i style="font-family:var(--math)">O</i>. On connaît le <b>rayon</b> <i style="font-family:var(--math)">r</i> et l’<b>angle</b> de rotation. On cherche <i style="font-family:var(--math)">L</i>, la <b>longueur parcourue sur le cercle</b>.</p>
+      <div class="rappel">
+        <p><b>Rien à connaître par cœur.</b> La formule du périmètre reste affichée. À chaque question, tu écris le calcul toi-même, ligne par ligne, comme dans le cours. Garde ta calculatrice pour la toute dernière étape.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" id="btn-commencer">Commencer
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===================== QUESTION ===================== -->
+    <section class="ecran" id="ecran-question">
+      <div class="progression">
+        <div class="progression__ligne"><span id="prog-texte">Question 1 sur 8</span><span>Exercice 5</span></div>
+        <div class="barre" role="progressbar" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0" id="prog-barre"><span></span></div>
+      </div>
+      <p class="consigne">Quelle longueur <i>L</i> le point <i>M</i> a-t-il parcourue sur le cercle ?</p>
+      <div class="donnees" id="donnees"></div>
+      <div class="question-grille">
+        <div class="colonne-figure">
+          <div class="figure">
+            <div id="scene"></div>
+            <div class="figure__actions">
+              <p class="figure__note">On cherche la longueur du chemin parcouru <b>sur le cercle</b>.</p>
+              <button type="button" class="rejouer" id="btn-rejouer" aria-label="Revoir le déplacement">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+                Revoir
+              </button>
+            </div>
+          </div>
+          <div class="memo">
+            <div class="memo__carte" id="memo-perimetre">
+              <span class="memo__cle">Périmètre du cercle complet</span>
+              <span class="memo__val"><i>P</i> = 2 × π × <i>r</i></span>
+              <span class="memo__sous"><i style="font-family:var(--math)">P</i> : périmètre du cercle complet · <i style="font-family:var(--math)">r</i> : rayon</span>
+            </div>
+            <div class="memo__carte" id="memo-tour">
+              <span class="memo__cle">Tour complet</span>
+              <span class="memo__val">1 tour = 360°</span>
+              <span class="memo__sous">sens positif</span>
+            </div>
+          </div>
+        </div>
+        <div class="colonne-etapes">
+          <div class="cahier" id="cahier"><p class="cahier__titre">Ma rédaction</p><p class="cahier__vide">Les lignes validées s’écriront ici, comme dans ton cahier.</p></div>
+          <div id="encours"></div>
+          <div class="suite" id="suite">
+            <button class="btn" type="button" id="btn-suivant">Question suivante
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== LA MÉTHODE (interlude) ===================== -->
+    <section class="ecran" id="ecran-methode" aria-labelledby="titre-methode">
+      <h2 id="titre-methode">Ce que tu viens de faire, à chaque fois</h2>
+      <div class="methode" style="margin-top:14px">
+        <h3>La méthode</h3>
+        <ol>
+          <li>J’écris la <b>fraction du tour</b> : angle sur 360.</li>
+          <li>Je <b>simplifie</b> cette fraction.</li>
+          <li>Je prends cette fraction du <b>cercle complet</b> : <i style="font-family:var(--math)">L</i> = fraction × 2 × π × <i style="font-family:var(--math)">r</i>.</li>
+          <li>Je <b>simplifie</b> le calcul ligne par ligne, puis je remplace <i style="font-family:var(--math)">r</i>.</li>
+        </ol>
+        <div class="ligne-math"><i>L</i> <span class="egal">=</span> <span class="frac"><span class="num">angle</span><span class="den">360</span></span> <span class="op">×</span> 2 <span class="op">×</span> π <span class="op">×</span> <i>r</i></div>
+        <p class="methode__conclusion">Cette écriture n’est pas une formule à retenir par cœur : c’est ce que tu as construit. À partir de maintenant, c’est toi qui l’écris en premier.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" id="btn-methode-suite">Continuer
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===================== FIN ===================== -->
+    <section class="ecran fin" id="ecran-fin" aria-labelledby="titre-fin">
+      <h2 id="titre-fin">Longueur sur un cercle : maîtrisée !</h2>
+      <div class="bilan">
+        <div class="bilan__carte bilan__carte--ok"><span class="bilan__nombre" id="bilan-ok">0 / 8</span><span class="bilan__libelle">rédigées sans erreur</span></div>
+        <div class="bilan__carte bilan__carte--aide"><span class="bilan__nombre" id="bilan-aide">0</span><span class="bilan__libelle">rédigées après une aide</span></div>
+      </div>
+      <div class="chaine">
+        <span>Angle</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+        <span>Fraction du tour</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+        <span>Fraction × périmètre du cercle complet</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+        <span class="final">Longueur parcourue <i style="font-family:var(--math)">L</i></span>
+      </div>
+      <div class="methode">
+        <h3>Exemple du cours</h3>
+        <div class="ligne-math compacte"><i>L</i> <span class="egal">=</span> <span class="frac"><span class="num">90</span><span class="den">360</span></span> <span class="op">×</span> 2 <span class="op">×</span> π <span class="op">×</span> <i>r</i> <span class="op">=</span> <span class="frac"><span class="num">1</span><span class="den">4</span></span> <span class="op">×</span> 2 <span class="op">×</span> π <span class="op">×</span> <i>r</i> <span class="op">=</span> <span class="frac"><span class="num">2</span><span class="den">4</span></span> <span class="op">×</span> π <span class="op">×</span> <i>r</i> <span class="op">=</span> <span class="frac"><span class="num">1</span><span class="den">2</span></span> <span class="op">×</span> π <span class="op">×</span> <i>r</i></div>
+      </div>
+      <p class="texte" style="margin-top:14px">Tu sais maintenant mesurer la longueur parcourue sur un cercle à partir d’un angle. <b>Cette idée va nous permettre de comprendre une autre façon de mesurer les angles.</b></p>
+      <div class="actions">
+        <button class="btn btn--secondaire" type="button" id="btn-recommencer">Recommencer</button>
+        <a class="btn" href="trigonometrie.html">Retour à la trigonométrie</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot reveal" style="--d:240ms">
+    <span>Une application conçue par ton professeur.</span>
+    <span>Première Bac Pro · ERA · TEBE · TMA</span>
+  </footer>
+</div>
+
+<script>
+/* =============================================================
+   EXERCICE 5 — Longueur parcourue sur un cercle
+   Notations du cours : O centre, H départ (à droite), J point du haut
+   (90°), M point mobile, r rayon, P périmètre du cercle complet,
+   L longueur parcourue.
+   A. Données et niveaux   B. Modèle   C. Figure animée
+   D. Le cahier et l'étape en cours   E. Les étapes   F. Déroulé
+   ============================================================= */
+(function () {
+'use strict';
+
+/* ------------------------------------------------------------
+   A. DONNÉES
+   Q1 reprend l'exemple du cours (90°, r = 1, r gardé en lettre puis
+   remplacé). niveau : guide (Q1-2) · allege (Q3) · autonome (Q4-8).
+   ------------------------------------------------------------ */
+const SITUATIONS = [
+  { angle: 90,  r: 1, niveau: 'guide',    rLettre: true },
+  { angle: 90,  r: 4, niveau: 'guide' },
+  { angle: 60,  r: 3, niveau: 'allege' },
+  { angle: 120, r: 3, niveau: 'autonome' },
+  { angle: 45,  r: 4, niveau: 'autonome' },
+  { angle: 72,  r: 5, niveau: 'autonome' },
+  { angle: 270, r: 2, niveau: 'autonome' },
+  { angle: 144, r: 5, niveau: 'autonome' },
+];
+const NB = SITUATIONS.length;
+
+/* ------------------------------------------------------------
+   B. MODÈLE — toutes les lignes de la rédaction, calculées
+   L = a/360 × 2 × π × r            (fraction du tour)
+   L = n/d × 2 × π × r              (simplifiée)
+   L = 2n/d × π × r                 (on multiplie la fraction par 2)
+   L = n2/d2 × π × r                (simplifiée, si possible)
+   L = n2/d2 × π × r_valeur         (Q1 seulement : r remplacé)
+   L = (k × π) / m                  (k = n2 × r, m = d2)
+   L = q π   ou   L = π / m2        (forme finale)
+   ------------------------------------------------------------ */
+const pgcd = (a, b) => b ? pgcd(b, a % b) : Math.abs(a);
+const reduire = (n, d) => { const g = pgcd(n, d); return { n: n / g, d: d / g }; };
+const equivalent = (n, d, N, D) => n * D === N * d;
+const fr = x => String(x).replace('.', ',');
+function modele(s) {
+  const f1 = reduire(s.angle, 360);                        // n/d
+  const f2 = { n: 2 * f1.n, d: f1.d };                     // 2n/d
+  const f3 = reduire(f2.n, f2.d);                          // simplifiée
+  const k = f3.n * s.r, m = f3.d;                          // (k × π) / m
+  const fin = reduire(k, m);                               // q π ou π/m2
+  const valeur = k / m * Math.PI;
+  return { f1, f2, f3, k, m, fin, approx: Math.round(valeur * 100) / 100, valeur };
+}
+const coefPi = q => (q === 1 ? '' : String(q)) + 'π';
+
+/* ------------------------------------------------------------
+   C. FIGURE
+   ------------------------------------------------------------ */
+const CX = 180, CY = 180, R = 128;
+const rad = d => d * Math.PI / 180;
+const pt = (deg, rayon = R) => ({ x: CX + rayon * Math.cos(rad(deg)), y: CY - rayon * Math.sin(rad(deg)) });
+const f = n => n.toFixed(2);
+function arcPath(deg, rayon) {
+  if (deg <= 0) return '';
+  const a = pt(0, rayon), b = pt(Math.min(deg, 359.99), rayon);
+  return `M${f(a.x)} ${f(a.y)} A${rayon} ${rayon} 0 ${deg > 180 ? 1 : 0} 0 ${f(b.x)} ${f(b.y)}`;
+}
+function rendreFigure(s) {
+  const rl = pt(0, R * .5), J = pt(90);
+  return `<svg viewBox="0 0 360 360" role="img" aria-label="Cercle de centre O, rayon ${s.r} cm ; M part de H et tourne de ${s.angle} degrés dans le sens positif">
+    <g data-secteurs></g>
+    <circle class="c-cercle" cx="${CX}" cy="${CY}" r="${R}"/>
+    <line class="c-rayon" x1="${CX}" y1="${CY}" x2="${CX + R}" y2="${CY}"/>
+    <text class="c-rayon-lbl" x="${f(rl.x)}" y="${CY + 16}"><tspan style="font-family:var(--math);font-style:italic">r</tspan> = ${s.r} cm</text>
+    <path class="c-angle" data-angle d=""/>
+    <line class="c-rayon" data-rayon-m x1="${CX}" y1="${CY}" x2="${CX + R}" y2="${CY}"/>
+    <path class="c-arc" data-arc d=""/>
+    <circle class="c-point c-point--fixe" cx="${CX}" cy="${CY}" r="4"/>
+    <text class="c-lbl" x="${CX - 14}" y="${CY + 14}">O</text>
+    <circle class="c-point c-point--fixe" cx="${CX + R}" cy="${CY}" r="5"/>
+    <text class="c-lbl" x="${CX + R + 16}" y="${CY - 14}">H</text>
+    <circle class="c-point c-point--fixe" cx="${f(J.x)}" cy="${f(J.y)}" r="4"/>
+    <text class="c-lbl" x="${f(J.x - 18)}" y="${f(J.y + 16)}">J</text>
+    <text class="c-mesure" data-mesure x="0" y="0"></text>
+    <circle class="c-point" data-m cx="${CX + R}" cy="${CY}" r="7"/>
+    <text class="c-lbl c-lbl--m" data-m-lbl x="0" y="0">M</text>
+    <text class="c-frac" data-frac x="66" y="22"></text>
+  </svg>`;
+}
+let anim = null;
+function poserAngle(svg, deg) {
+  const m = pt(deg), ml = pt(deg, R + 22), mes = pt(deg / 2, 58);
+  svg.querySelector('[data-arc]').setAttribute('d', arcPath(deg, R));
+  svg.querySelector('[data-angle]').setAttribute('d', deg > 0 ? `M${CX} ${CY} L${CX + 36} ${CY} ${arcPath(deg, 36).replace(/^M[^A]*A/, 'A')} Z` : '');
+  const rm = svg.querySelector('[data-rayon-m]'); rm.setAttribute('x2', f(m.x)); rm.setAttribute('y2', f(m.y));
+  const M = svg.querySelector('[data-m]'); M.setAttribute('cx', f(m.x)); M.setAttribute('cy', f(m.y));
+  const L = svg.querySelector('[data-m-lbl]'); L.setAttribute('x', f(ml.x)); L.setAttribute('y', f(ml.y));
+  const T = svg.querySelector('[data-mesure]'); T.setAttribute('x', f(mes.x)); T.setAttribute('y', f(mes.y)); T.textContent = deg > 8 ? `${Math.round(deg)}°` : '';
+}
+function jouerAnimation(s) {
+  const svg = document.querySelector('#scene svg'); if (!svg) return;
+  if (anim) cancelAnimationFrame(anim);
+  if (reduceMotion) { poserAngle(svg, s.angle); return; }
+  const duree = 1400 + s.angle * 6;
+  const easeInOut = u => u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+  let t0 = null;
+  const tick = ts => { if (t0 === null) t0 = ts; const u = Math.min(1, (ts - t0) / duree); poserAngle(svg, s.angle * easeInOut(u)); anim = u < 1 ? requestAnimationFrame(tick) : null; };
+  poserAngle(svg, 0); anim = requestAnimationFrame(tick);
+}
+function montrerSecteurs(frac) {
+  const svg = document.querySelector('#scene svg'); if (!svg) return;
+  const g = svg.querySelector('[data-secteurs]');
+  let html = '';
+  for (let i = 0; i < frac.d; i++) { const p = pt(i * 360 / frac.d); html += `<line class="c-secteur" x1="${CX}" y1="${CY}" x2="${f(p.x)}" y2="${f(p.y)}"/>`; }
+  g.innerHTML = html;
+  requestAnimationFrame(() => g.querySelectorAll('.c-secteur').forEach(l => l.classList.add('visible')));
+  const t = svg.querySelector('[data-frac]'); t.textContent = `${frac.n}/${frac.d} du cercle`; t.classList.add('visible');
+}
+
+/* ------------------------------------------------------------
+   D. LE CAHIER (lignes validées) ET L'ÉTAPE EN COURS
+   ------------------------------------------------------------ */
+const $ = id => document.getElementById(id);
+const ui = { prog: $('prog-texte'), barre: $('prog-barre'), donnees: $('donnees'), scene: $('scene'), cahier: $('cahier'), encours: $('encours'), suite: $('suite'), suivant: $('btn-suivant') };
+const ecrans = { intro: $('ecran-intro'), question: $('ecran-question'), methode: $('ecran-methode'), fin: $('ecran-fin') };
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const el = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+const FRAC = (num, den) => `<span class="frac"><span class="num">${num}</span><span class="den">${den}</span></span>`;
+const CHAMP = (nom, valeur = '') => `<input class="champ" data-champ="${nom}" type="text" inputmode="numeric" autocomplete="off" aria-label="${nom}" value="${valeur}"${valeur !== '' ? ' readonly' : ''}>`;
+const I = l => `<i>${l}</i>`;
+const RX = s => s.rLettre ? I('r') : String(s.r);
+const message = (sorte, titre, texte) => {
+  const icone = sorte === 'juste' ? '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M12 7v5M12 16h.01"/></svg>';
+  return `<div class="message message--${sorte}"><span class="message__icone" aria-hidden="true">${icone}</span><p>${titre ? `<b${texte ? '' : ' style="margin:0"'}>${titre}</b>` : ''}${texte}</p></div>`;
+};
+const defiler = node => { if (!reduceMotion && node) node.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
+const lireEntier = c => { const v = c.value.trim(); return v === '' ? null : (/^\d+$/.test(v) ? parseInt(v, 10) : NaN); };
+const lireDecimal = c => { const v = parseFloat(c.value.replace(',', '.').replace(/\s/g, '')); return isNaN(v) ? null : v; };
+const COCHE = '<span class="cahier__coche" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></svg></span>';
+
+let index = 0, erreurs = 0, courant = null, M = null;
+const bilan = { sansErreur: 0, apresAide: 0 };
+const montrer = nom => { for (const k in ecrans) ecrans[k].classList.toggle('actif', k === nom); window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }); };
+
+function viderCahier() { ui.cahier.innerHTML = `<p class="cahier__titre">Ma rédaction</p><p class="cahier__vide">Les lignes validées s’écriront ici, comme dans ton cahier.</p>`; }
+function ecrireCahier(html, finale = false) {
+  const vide = ui.cahier.querySelector('.cahier__vide'); if (vide) vide.remove();
+  ui.cahier.appendChild(el(`<div class="cahier__ligne">${COCHE}<div class="ligne-math${finale ? ' finale' : ''}">${html}</div></div>`));
+}
+/* Construit l'étape en cours : consigne, texte, contenu, pied avec Vérifier + aide facultative */
+function etape({ consigne, texte = '', contenu, aide = '', aide2 = '', verifier = 'Vérifier', sansBouton = false }) {
+  const b = el(`<div class="encours">
+    <p class="encours__consigne">${consigne}</p>
+    ${texte ? `<p class="encours__texte">${texte}</p>` : ''}
+    <div data-contenu>${contenu}</div>
+    <div class="retour-eleve" data-fb></div>
+    <div class="pied-etape">
+      ${sansBouton ? '' : `<button type="button" class="btn" data-verifier>${verifier}</button>`}
+      ${aide ? `<button type="button" class="aide-btn" data-aide><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5M12 17h.01"/></svg>J’ai besoin d’aide</button>` : ''}
+    </div>
+  </div>`);
+  ui.encours.innerHTML = ''; ui.encours.appendChild(b); defiler(b);
+  const fb = b.querySelector('[data-fb]');
+  let nAide = 0;
+  const montrerAide = () => { if (!aide) return; nAide++; fb.innerHTML = message('aide', 'Aide', nAide >= 2 && aide2 ? aide2 : aide); };
+  const btnAide = b.querySelector('[data-aide]'); if (btnAide) btnAide.addEventListener('click', montrerAide);
+  const champs = [...b.querySelectorAll('.champ:not([readonly])')];
+  if (champs[0]) champs[0].focus({ preventScroll: true });
+  return { b, fb, champs, montrerAide, btn: b.querySelector('[data-verifier]'), q: n => b.querySelector(`[data-champ="${n}"]`) };
+}
+const surEntree = (inputs, fn) => inputs.forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); fn(); } }));
+function marquer(champ, ok) { champ.classList.toggle('fausse', !ok); if (ok) champ.classList.add('bonne'); }
+function verrouiller(champs) { champs.forEach(c => { c.classList.remove('fausse'); c.classList.add('bonne'); c.readOnly = true; }); }
+/* Une erreur de plus : compteur global + aide automatique après deux erreurs sur la même étape */
+function erreur(ctx, texte) { erreurs++; ctx.nb = (ctx.nb || 0) + 1; ctx.fb.innerHTML = message('aide', 'Pas encore.', texte + (ctx.nb >= 2 && ctx.aideAuto ? `<br><span style="display:block;margin-top:6px"><b style="display:inline">Aide :</b> ${ctx.aideAuto}</span>` : '')); }
+const lireTous = (ctx, noms) => { const v = {}; for (const n of noms) v[n] = lireEntier(ctx.q(n)); return v; };
+const incomplet = (ctx, v) => { const vals = Object.values(v); if (vals.some(x => x === null)) { ctx.fb.innerHTML = message('aide', '', 'Complète toutes les cases.'); return true; } if (vals.some(Number.isNaN)) { ctx.fb.innerHTML = message('aide', '', 'Écris seulement des nombres entiers.'); return true; } return false; };
+const apres = (fn, ms = 500) => setTimeout(fn, reduceMotion ? 0 : ms);
+const N = () => courant.niveau;
+
+/* ------------------------------------------------------------
+   E. LES ÉTAPES
+   ------------------------------------------------------------ */
+/* 1 — fraction du tour */
+function etapeFraction(s) {
+  const guide = N() === 'guide';
+  const ctx = etape({
+    consigne: 'Écris la fraction du tour.',
+    texte: guide ? `${I('M')} a tourné de <b>${s.angle}°</b>. Un tour complet mesure <b>360°</b>.` : '',
+    contenu: `<div class="ligne-math">${FRAC(CHAMP('a') + (guide ? '<span class="role">rotation de M</span>' : ''), CHAMP('b') + (guide ? '<span class="role">tour complet</span>' : ''))}</div>`,
+    aide: `En haut : l’angle parcouru par ${I('M')}. En bas : les 360° du tour complet.`,
+  });
+  ctx.aideAuto = `En haut : l’angle parcouru, ${s.angle}. En bas : le tour complet, 360.`;
+  const valider = () => {
+    const v = lireTous(ctx, ['a', 'b']); if (incomplet(ctx, v)) return;
+    const okA = v.a === s.angle, okB = v.b === 360;
+    marquer(ctx.q('a'), okA); marquer(ctx.q('b'), okB);
+    if (!okA || !okB) {
+      erreur(ctx, !okB ? (v.b === 100 ? 'Un tour complet ne contient pas 100°, mais 360°.' : 'Le nombre du bas représente un tour complet. Un tour complet mesure 360°.') : `Le nombre du haut, c’est ce que ${I('M')} a parcouru : regarde l’angle sur la figure.`);
+      return;
+    }
+    verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+    ctx.fb.innerHTML = message('juste', 'Exact.', `${I('M')} a parcouru ${s.angle}° sur les 360° du tour complet.`);
+    ecrireCahier(`${FRAC(s.angle, 360)}`);
+    apres(() => etapeSimplifier(s));
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+
+/* 2 — peut-on simplifier ? puis la simplification */
+function etapeSimplifier(s) {
+  const direct = N() === 'autonome';
+  if (!direct) {
+    const ctx = etape({
+      consigne: 'Peut-on simplifier cette fraction ?',
+      contenu: `<div class="ligne-math">${FRAC(s.angle, 360)}</div><div class="choix choix--2"><button type="button" class="choix__btn" data-rep="oui">Oui</button><button type="button" class="choix__btn" data-rep="non">Non</button></div>`,
+      sansBouton: true,
+    });
+    ctx.b.querySelectorAll('.choix__btn').forEach(btn => btn.addEventListener('click', () => {
+      if (btn.dataset.rep === 'oui') { btn.classList.add('juste'); ctx.b.querySelectorAll('.choix__btn').forEach(x => x.disabled = true); apres(() => saisieSimplification(s), 300); }
+      else { erreur(ctx, `Regarde mieux : cherche un nombre qui divise à la fois ${s.angle} et 360.`); btn.classList.add('faux'); setTimeout(() => btn.classList.remove('faux'), 900); }
+    }));
+  } else saisieSimplification(s);
+}
+function saisieSimplification(s) {
+  const ctx = etape({
+    consigne: 'Simplifie la fraction.',
+    contenu: `<div class="ligne-math">${FRAC(s.angle, 360)}<span class="egal">=</span>${FRAC(CHAMP('n'), CHAMP('d'))}</div>`,
+    aide: `Cherche un nombre qui divise à la fois ${s.angle} et 360.`,
+  });
+  ctx.aideAuto = (360 % s.angle === 0) ? `${s.angle} × ${360 / s.angle} = 360.` : `${pgcd(s.angle, 360)} divise à la fois ${s.angle} et 360.`;
+  const valider = () => {
+    const v = lireTous(ctx, ['n', 'd']); if (incomplet(ctx, v)) return;
+    if (v.d === 0) { ctx.fb.innerHTML = message('aide', '', 'Le nombre du bas ne peut pas être 0.'); return; }
+    const eq = equivalent(v.n, v.d, s.angle, 360), irr = pgcd(v.n, v.d) === 1;
+    if (eq && irr) {
+      verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+      ctx.fb.innerHTML = message('juste', 'Exact.', `${I('M')} a parcouru <b style="display:inline">${M.f1.n}/${M.f1.d} du cercle</b> (regarde la figure).`);
+      montrerSecteurs(M.f1);
+      ecrireCahier(`${FRAC(s.angle, 360)}<span class="egal">=</span>${FRAC(M.f1.n, M.f1.d)}`);
+      apres(() => N() === 'guide' ? etapeRappelCercle(s) : etapeLigne1(s), 700);
+      return;
+    }
+    marquer(ctx.q('n'), false); marquer(ctx.q('d'), false);
+    if (eq) erreur(ctx, `${v.n}/${v.d} est bien égal à ${s.angle}/360, mais on peut simplifier encore.`);
+    else if (v.n === 1 && 360 % s.angle === 0 && v.d !== 360 / s.angle) erreur(ctx, `Vérifie : combien de fois ${s.angle} faut-il pour obtenir 360 ?`);
+    else erreur(ctx, 'Pour obtenir une fraction équivalente, on divise le nombre du haut et le nombre du bas par le même nombre.');
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+
+/* 3 — rappel : la formule donne le cercle ENTIER (Q1-2 seulement, aucune saisie) */
+function etapeRappelCercle(s) {
+  const memo = $('memo-perimetre'); memo.classList.remove('eclair'); void memo.offsetWidth; memo.classList.add('eclair');
+  const ctx = etape({
+    consigne: 'Le cercle entier mesure :',
+    contenu: `<div class="info-perimetre"><div class="ligne-math">${I('P')}<span class="egal">=</span>2<span class="op">×</span>π<span class="op">×</span>${I('r')}</div><p>${I('M')} n’en a parcouru que <b>${M.f1.n}/${M.f1.d}</b>.</p></div>`,
+    verifier: 'J’ai compris',
+  });
+  ctx.btn.addEventListener('click', () => etapeLigne1(s));
+}
+
+/* 4 — première ligne : L = [a]/[b] × 2 × π × [r] */
+function etapeLigne1(s) {
+  const guide = N() !== 'autonome', rl = s.rLettre;
+  const ctx = etape({
+    consigne: `Écris le calcul de ${I('L')}.`,
+    texte: guide ? 'Fraction du tour × périmètre du cercle complet.' : '',
+    contenu: `<div class="ligne-math compacte">${I('L')}<span class="egal">=</span>${FRAC(CHAMP('a'), CHAMP('b'))}<span class="op">×</span>2<span class="op">×</span>π<span class="op">×</span>${rl ? I('r') : CHAMP('c')}</div>`,
+    aide: `${I('M')} a parcouru seulement une partie du cercle. Quelle fraction du cercle a-t-il parcourue ? Écris-la devant 2 × π × r${rl ? '' : ', puis regarde la longueur indiquée entre O et le cercle pour r'}.`,
+  });
+  ctx.aideAuto = `La fraction du tour, c’est ${s.angle} sur 360${rl ? '' : ` ; le rayon vaut ${s.r}`}.`;
+  const valider = () => {
+    const noms = rl ? ['a', 'b'] : ['a', 'b', 'c'];
+    const v = lireTous(ctx, noms); if (incomplet(ctx, v)) return;
+    const brute = v.a === s.angle && v.b === 360, simplifiee = v.a === M.f1.n && v.b === M.f1.d;
+    const fracOk = brute || simplifiee, cOk = rl || v.c === s.r;
+    marquer(ctx.q('a'), fracOk); marquer(ctx.q('b'), fracOk); if (!rl) marquer(ctx.q('c'), cOk);
+    if (!fracOk || !cOk) {
+      let t;
+      if (!fracOk) {
+        if (v.b === 100) t = 'Un tour complet ne contient pas 100°, mais 360°.';
+        else if (v.a === v.b || v.b === 1) t = `${I('M')} n’a pas fait un tour complet. Il faut donc prendre seulement une partie du périmètre : la fraction du tour.`;
+        else if (v.b !== 360 && !equivalent(v.a, v.b, s.angle, 360)) t = 'Le nombre du bas représente un tour complet. Un tour complet mesure 360°.';
+        else t = `Reprends la fraction du tour : ${s.angle} sur 360, ou sa forme simplifiée.`;
+      } else t = v.c === 2 * s.r ? `Ici tu as mis le diamètre. La valeur indiquée entre O et le cercle est le rayon ${I('r')}.` : `Le dernier facteur est le rayon ${I('r')} : regarde la longueur indiquée entre O et le cercle.`;
+      erreur(ctx, t); return;
+    }
+    verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+    const r = RX(s);
+    // On écrit dans le cahier exactement ce que l'élève a saisi
+    ecrireCahier(`${I('L')}<span class="egal">=</span>${FRAC(v.a, v.b)}<span class="op">×</span>2<span class="op">×</span>π<span class="op">×</span>${r}`);
+    ctx.fb.innerHTML = message('juste', 'Exact.', '');
+    if (brute) apres(() => etapeLigne2(s));
+    else { if (N() === 'autonome') montrerSecteurs(M.f1); apres(() => etapeLigne3(s)); }
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+
+/* 5 — ligne 2 : la fraction simplifiée */
+function etapeLigne2(s) {
+  const r = RX(s);
+  const ctx = etape({
+    consigne: 'Réécris avec la fraction simplifiée.',
+    contenu: `<div class="ligne-math compacte">${I('L')}<span class="egal">=</span>${FRAC(CHAMP('n'), CHAMP('d'))}<span class="op">×</span>2<span class="op">×</span>π<span class="op">×</span>${r}</div>`,
+    aide: `Reprends la fraction simplifiée que tu as écrite dans ton cahier : ${M.f1.n}/${M.f1.d}.`,
+  });
+  const valider = () => {
+    const v = lireTous(ctx, ['n', 'd']); if (incomplet(ctx, v)) return;
+    const ok = v.n === M.f1.n && v.d === M.f1.d;
+    marquer(ctx.q('n'), ok); marquer(ctx.q('d'), ok);
+    if (!ok) { erreur(ctx, equivalent(v.n, v.d, s.angle, 360) ? 'C’est égal, mais ce n’est pas la fraction simplifiée.' : 'Ce n’est pas la fraction du tour : regarde la simplification dans ton cahier.'); return; }
+    verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+    ecrireCahier(`${I('L')}<span class="egal">=</span>${FRAC(M.f1.n, M.f1.d)}<span class="op">×</span>2<span class="op">×</span>π<span class="op">×</span>${r}`);
+    if (N() === 'autonome') montrerSecteurs(M.f1);
+    ctx.fb.innerHTML = message('juste', 'Exact.', '');
+    apres(() => etapeLigne3(s));
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+
+/* 6 — ligne 3 : mettre n/d et 2 dans une seule fraction (2 = 2/1) */
+function etapeLigne3(s) {
+  const r = RX(s);
+  const ctx = etape({
+    consigne: `Mets ${M.f1.n}/${M.f1.d} et 2 dans une seule fraction.`,
+    contenu: `<div class="ligne-math compacte">${I('L')}<span class="egal">=</span><span class="frac frac--produit"><span class="num">${CHAMP('n1')}<span class="op">×</span>${CHAMP('n2')}</span><span class="den">${CHAMP('d1')}<span class="op">×</span>${CHAMP('d2')}</span></span><span class="op">×</span>π<span class="op">×</span>${r}</div>`,
+    aide: 'Pour multiplier deux fractions, écris aussi 2 sous forme de fraction.',
+    aide2: `2 <span class="egal">=</span> ${FRAC(2, 1)}`,
+  });
+  const valider = () => {
+    const v = lireTous(ctx, ['n1', 'n2', 'd1', 'd2']); if (incomplet(ctx, v)) return;
+    const colA = { n: v.n1, d: v.d1 }, colB = { n: v.n2, d: v.d2 };
+    const estFrac = c => c.n === M.f1.n && c.d === M.f1.d, estDeux = c => c.n === 2 && c.d === 1;
+    const ok = (estFrac(colA) && estDeux(colB)) || (estFrac(colB) && estDeux(colA));
+    if (!ok) {
+      const fracA = estFrac(colA), fracB = estFrac(colB);
+      const colonneFrac = fracA ? 'A' : fracB ? 'B' : null;
+      const colonneDeux = colonneFrac === 'A' ? colB : colonneFrac === 'B' ? colA : null;
+      ['n1', 'd1'].forEach(k => marquer(ctx.q(k), colonneFrac === 'A'));
+      ['n2', 'd2'].forEach(k => marquer(ctx.q(k), colonneFrac === 'B'));
+      let t;
+      if (!colonneFrac) t = `Recopie d’abord la fraction ${M.f1.n}/${M.f1.d} : ${M.f1.n} en haut, ${M.f1.d} en bas.`;
+      else if (colonneDeux.n === 1 && colonneDeux.d === 2) t = 'Quelle fraction est égale à 2 ?';
+      else t = 'Regarde comment écrire le nombre 2 sous forme de fraction.';
+      erreur(ctx, t); return;
+    }
+    verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+    ecrireCahier(`${I('L')}<span class="egal">=</span>${FRAC(`${v.n1}<span class="op">×</span>${v.n2}`, `${v.d1}<span class="op">×</span>${v.d2}`)}<span class="op">×</span>π<span class="op">×</span>${r}`);
+    ctx.fb.innerHTML = message('juste', 'Exact.', '');
+    apres(() => etapeMultiplications(s, v));
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+
+/* 6 bis — effectuer les multiplications : L = [2n]/[d] × π × r */
+function etapeMultiplications(s, prec) {
+  const r = RX(s);
+  const ctx = etape({
+    consigne: 'Effectue les multiplications.',
+    contenu: `<div class="ligne-math compacte">${I('L')}<span class="egal">=</span>${FRAC(CHAMP('n'), CHAMP('d'))}<span class="op">×</span>π<span class="op">×</span>${r}</div>`,
+    aide: `En haut : ${prec.n1} × ${prec.n2}. En bas : ${prec.d1} × ${prec.d2}.`,
+  });
+  const valider = () => {
+    const v = lireTous(ctx, ['n', 'd']); if (incomplet(ctx, v)) return;
+    const okN = v.n === M.f2.n, okD = v.d === M.f2.d;
+    marquer(ctx.q('n'), okN); marquer(ctx.q('d'), okD);
+    if (!okN || !okD) { erreur(ctx, `Recalcule ${prec.n1} × ${prec.n2} et ${prec.d1} × ${prec.d2}.`); return; }
+    verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+    ecrireCahier(`${I('L')}<span class="egal">=</span>${FRAC(M.f2.n, M.f2.d)}<span class="op">×</span>π<span class="op">×</span>${r}`);
+    ctx.fb.innerHTML = message('juste', 'Exact.', '');
+    const reductible = M.f3.d !== M.f2.d;
+    apres(() => reductible ? etapeLigne4(s) : (s.rLettre ? etapeRayon(s) : etapeCalculFinal(s)));
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+
+/* 7 — ligne 4 : simplifier la nouvelle fraction */
+function etapeLigne4(s) {
+  const r = RX(s);
+  const ctx = etape({
+    consigne: 'Simplifie la fraction.',
+    contenu: `<div class="ligne-math compacte">${I('L')}<span class="egal">=</span>${FRAC(CHAMP('n'), CHAMP('d'))}<span class="op">×</span>π<span class="op">×</span>${r}</div>`,
+    aide: `Cherche un nombre qui divise à la fois ${M.f2.n} et ${M.f2.d}.`,
+  });
+  ctx.aideAuto = `${pgcd(M.f2.n, M.f2.d)} divise ${M.f2.n} et ${M.f2.d}.`;
+  const valider = () => {
+    const v = lireTous(ctx, ['n', 'd']); if (incomplet(ctx, v)) return;
+    if (v.d === 0) { ctx.fb.innerHTML = message('aide', '', 'Le nombre du bas ne peut pas être 0.'); return; }
+    const ok = v.n === M.f3.n && v.d === M.f3.d;
+    marquer(ctx.q('n'), ok); marquer(ctx.q('d'), ok);
+    if (!ok) { erreur(ctx, equivalent(v.n, v.d, M.f2.n, M.f2.d) ? 'C’est égal, mais on peut simplifier encore.' : `Vérifie la simplification de ${M.f2.n}/${M.f2.d}.`); return; }
+    verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+    ecrireCahier(`${I('L')}<span class="egal">=</span>${FRAC(M.f3.n, M.f3.d)}<span class="op">×</span>π<span class="op">×</span>${r}`);
+    ctx.fb.innerHTML = message('juste', 'Exact.', '');
+    apres(() => s.rLettre ? etapeRayon(s) : etapeCalculFinal(s));
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+
+/* 8 — remplacer r (Q1 seulement) */
+function etapeRayon(s) {
+  const ctx = etape({
+    consigne: `Remplace ${I('r')} par sa valeur.`,
+    contenu: `<div class="ligne-math compacte">${I('L')}<span class="egal">=</span>${FRAC(M.f3.n, M.f3.d)}<span class="op">×</span>π<span class="op">×</span>${CHAMP('c')}</div>`,
+    aide: 'Regarde la longueur indiquée entre O et le cercle.',
+  });
+  const valider = () => {
+    const v = lireTous(ctx, ['c']); if (incomplet(ctx, v)) return;
+    const ok = v.c === s.r; marquer(ctx.q('c'), ok);
+    if (!ok) { erreur(ctx, v.c === 2 * s.r ? `Ici tu as mis le diamètre. La valeur indiquée entre O et le cercle est le rayon ${I('r')}.` : 'Regarde la longueur indiquée entre O et le cercle.'); return; }
+    verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+    ecrireCahier(`${I('L')}<span class="egal">=</span>${FRAC(M.f3.n, M.f3.d)}<span class="op">×</span>π<span class="op">×</span>${s.r}`);
+    ctx.fb.innerHTML = message('juste', 'Exact.', '');
+    apres(() => etapeCalculFinal(s));
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+
+/* 9 — une seule fraction : L = ([n] × π × [r]) / [d] */
+function etapeCalculFinal(s) {
+  const ctx = etape({
+    consigne: 'Écris le calcul sous la forme d’une seule fraction.',
+    contenu: `<div class="ligne-math compacte">${I('L')}<span class="egal">=</span>${FRAC(`${CHAMP('a')}<span class="op">×</span>π<span class="op">×</span>${CHAMP('b')}`, CHAMP('c'))}</div>`,
+    aide: `Tout ce qui est multiplié va en haut : ${M.f3.n}, π et ${s.r}. En bas, ${M.f3.d} reste seul.`,
+  });
+  const valider = () => {
+    const v = lireTous(ctx, ['a', 'b', 'c']); if (incomplet(ctx, v)) return;
+    if (v.c === 0) { ctx.fb.innerHTML = message('aide', '', 'Le nombre du bas ne peut pas être 0.'); return; }
+    const okHaut = (v.a === M.f3.n && v.b === s.r) || (v.a === s.r && v.b === M.f3.n), okBas = v.c === M.f3.d;
+    marquer(ctx.q('a'), okHaut); marquer(ctx.q('b'), okHaut); marquer(ctx.q('c'), okBas);
+    if (!okHaut || !okBas) { erreur(ctx, !okBas ? `Le nombre du bas ne change pas : ${M.f3.d}.` : `En haut, on multiplie ${M.f3.n}, π et le rayon ${s.r}.`); return; }
+    verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+    ecrireCahier(`${I('L')}<span class="egal">=</span>${FRAC(`${v.a}<span class="op">×</span>π<span class="op">×</span>${v.b}`, v.c)}`);
+    ctx.fb.innerHTML = message('juste', 'Exact.', '');
+    apres(() => etapeProduitPi(s, v));
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+/* 9 bis — effectuer la multiplication en haut : L = ([k] × π) / [m] */
+function etapeProduitPi(s, prec) {
+  const ctx = etape({
+    consigne: 'Effectue la multiplication.',
+    contenu: `<div class="ligne-math compacte">${I('L')}<span class="egal">=</span>${FRAC(`${CHAMP('k')}<span class="op">×</span>π`, CHAMP('m'))}</div>`,
+    aide: `En haut : ${prec.a} × ${prec.b}, et π reste. En bas : ${prec.c}.`,
+  });
+  const valider = () => {
+    const v = lireTous(ctx, ['k', 'm']); if (incomplet(ctx, v)) return;
+    const okK = v.k === M.k, okM = v.m === M.m;
+    marquer(ctx.q('k'), okK); marquer(ctx.q('m'), okM);
+    if (!okK || !okM) { erreur(ctx, !okK ? `Recalcule ${prec.a} × ${prec.b}.` : `Le nombre du bas ne change pas : ${prec.c}.`); return; }
+    verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+    ecrireCahier(`${I('L')}<span class="egal">=</span>${FRAC(`${M.k}<span class="op">×</span>π`, M.m)}`);
+    ctx.fb.innerHTML = message('juste', 'Exact.', '');
+    apres(() => etapeFormeFinale(s));
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+/* 9 ter — terminer : L = [q] π   ou   L = π / [m2] */
+function etapeFormeFinale(s) {
+  const entier = M.fin.d === 1;
+  const ctx = etape({
+    consigne: 'Termine le calcul.',
+    contenu: entier
+      ? `<div class="ligne-math compacte">${I('L')}<span class="egal">=</span>${CHAMP('q')}π<span class="unite">cm</span></div>`
+      : `<div class="ligne-math compacte">${I('L')}<span class="egal">=</span>${FRAC('π', CHAMP('q'))}<span class="unite">cm</span></div>`,
+    aide: entier ? `Calcule ${M.k} ÷ ${M.m}.` : `1 × π, c’est π. Le nombre du bas ne change pas.`,
+  });
+  const valider = () => {
+    const v = lireTous(ctx, ['q']); if (incomplet(ctx, v)) return;
+    const attendu = entier ? M.fin.n : M.fin.d, ok = v.q === attendu;
+    marquer(ctx.q('q'), ok);
+    if (!ok) { erreur(ctx, entier ? `Vérifie : ${M.k} ÷ ${M.m}.` : `Regarde le nombre du bas dans la ligne précédente.`); return; }
+    verrouiller(ctx.champs); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+    ecrireCahier(entier ? `${I('L')}<span class="egal">=</span>${coefPi(M.fin.n)}<span class="unite">cm</span>` : `${I('L')}<span class="egal">=</span>${FRAC('π', M.fin.d)}<span class="unite">cm</span>`);
+    ctx.fb.innerHTML = message('juste', 'Exact.', '');
+    apres(() => etapeDecimal(s));
+  };
+  ctx.btn.addEventListener('click', valider); surEntree(ctx.champs, valider);
+}
+
+/* 10 — valeur approchée */
+function etapeDecimal(s) {
+  const affichageExact = M.fin.d === 1 ? coefPi(M.fin.n) : `π/${M.fin.d}`;
+  const ctx = etape({
+    consigne: 'Donne une valeur approchée au centième.',
+    contenu: `<div class="calcul"><div class="ligne-math compacte" style="padding:0">${I('L')}<span class="egal">≈</span></div><input class="champ champ--large" data-champ="dec" type="text" inputmode="decimal" autocomplete="off" aria-label="Valeur approchée" placeholder="…"><span class="unite">cm</span></div>`,
+    aide: `Tape ${M.fin.d === 1 ? `${M.fin.n} × π` : `π ÷ ${M.fin.d}`} sur la calculatrice, puis arrondis au centième.`,
+  });
+  let fini = false;
+  const valider = () => {
+    if (fini) { ui.suivant.click(); return; }
+    const v = lireDecimal(ctx.q('dec'));
+    if (v === null) { ctx.fb.innerHTML = message('aide', '', 'Écris un nombre décimal, par exemple 6,28.'); return; }
+    if (Math.abs(v - M.valeur) <= 0.011) {
+      fini = true; ctx.q('dec').value = fr(M.approx); verrouiller([ctx.q('dec')]); ctx.btn.remove(); ctx.b.querySelector('[data-aide]')?.remove();
+      ecrireCahier(`${I('L')}<span class="egal">≈</span>${fr(M.approx)}<span class="unite">cm</span>`, true);
+      ctx.fb.innerHTML = message('juste', 'Exact !', `${I('M')} a parcouru ${affichageExact} cm ≈ <b style="display:inline">${fr(M.approx)} cm</b> sur le cercle.`);
+      if (erreurs === 0) bilan.sansErreur++; else bilan.apresAide++;
+      ui.suite.classList.add('visible'); defiler(ui.suite); ui.suivant.focus({ preventScroll: true });
+      return;
+    }
+    ctx.q('dec').classList.add('fausse');
+    erreur(ctx, `Sur la calculatrice : ${M.fin.d === 1 ? `${M.fin.n} × π` : `π ÷ ${M.fin.d}`}.`);
+  };
+  ctx.aideAuto = `${affichageExact} ≈ ${fr(M.approx)}.`;
+  ctx.btn.addEventListener('click', valider); ctx.q('dec').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); valider(); } });
+}
+
+/* ------------------------------------------------------------
+   F. DÉROULÉ
+   ------------------------------------------------------------ */
+function afficherQuestion() {
+  const s = courant = SITUATIONS[index]; M = modele(s); erreurs = 0;
+  ui.prog.textContent = `Question ${index + 1} sur ${NB}`;
+  ui.barre.setAttribute('aria-valuenow', index); ui.barre.firstElementChild.style.width = `${index / NB * 100}%`;
+  ui.donnees.innerHTML = `<span>Rayon : <b><i>r</i> = ${s.r} cm</b></span><span>Rotation : <b>${s.angle}°</b></span><span>Sens positif, de <i>H</i> vers <i>M</i></span>`;
+  ui.scene.innerHTML = rendreFigure(s);
+  viderCahier(); ui.encours.innerHTML = ''; ui.suite.classList.remove('visible');
+  jouerAnimation(s);
+  if (N() === 'autonome') etapeLigne1(s); else etapeFraction(s);
+}
+function demarrer() { index = 0; bilan.sansErreur = 0; bilan.apresAide = 0; montrer('question'); afficherQuestion(); }
+function suivante() {
+  index++;
+  if (index >= NB) { terminer(); return; }
+  if (index === 3) { montrer('methode'); return; }          // après Q3 : la méthode, puis l'autonomie
+  montrer('question'); afficherQuestion();
+}
+function terminer() { $('bilan-ok').textContent = `${bilan.sansErreur} / ${NB}`; $('bilan-aide').textContent = String(bilan.apresAide); montrer('fin'); }
+$('btn-commencer').addEventListener('click', demarrer);
+$('btn-recommencer').addEventListener('click', demarrer);
+$('btn-methode-suite').addEventListener('click', () => { montrer('question'); afficherQuestion(); });
+$('btn-rejouer').addEventListener('click', () => courant && jouerAnimation(courant));
+ui.suivant.addEventListener('click', suivante);
+requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.add('is-ready')));
+
+/* Contrôle interne : fraction réductible ; forme finale q·π ou π/m ;
+   et la chaîne de lignes est cohérente (chaque ligne vaut la même longueur). */
+SITUATIONS.forEach(s => {
+  const m = modele(s);
+  console.assert(pgcd(s.angle, 360) > 1, 'fraction réductible', s);
+  console.assert(m.fin.d === 1 || m.fin.n === 1, 'forme finale simple', s, m);
+  const L = s.angle / 360 * 2 * Math.PI * s.r;
+  console.assert(Math.abs(L - m.valeur) < 1e-9, 'valeur', s, m);
+});
+})();
+</script>
+</body>
+</html>
